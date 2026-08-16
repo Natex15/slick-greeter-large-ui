@@ -6,9 +6,9 @@ A clean, reproducible modification and build tool for **Linux Mint's Slick-Greet
 
 ## Visual Overview
 
-<!-- Screenshot Placeholders -->
-| Stock Slick-Greeter | Large UI Mod |
+| Stock Slick-Greeter (Before) | Large UI Mod (After) |
 | :---: | :---: |
+| ![Stock Slick-Greeter UI](assets/before-login-screen.png) | ![Large UI Modded Slick-Greeter](assets/after-login-screen.png) |
 | *(Stock UI: 360px box, 32px avatar, 13-14pt fonts)* | *(Large UI: 400px box, 56px avatar, 72px entry, 17-20pt fonts)* |
 
 ---

@@ -99,7 +99,7 @@ else
 
     info "Reinstalling stock package from official repositories..."
     sudo apt-get update
-    sudo apt-get install --reinstall -y "slick-greeter=${TARGET_STOCK_VER}" || sudo apt-get install --reinstall -y slick-greeter
+    sudo apt-get install --allow-downgrades -y "slick-greeter=${TARGET_STOCK_VER}"
 
     pass "Stock Slick-Greeter restored."
 
