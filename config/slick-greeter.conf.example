@@ -1,0 +1,38 @@
+# Slick-Greeter Configuration Example
+# Place this file at /etc/lightdm/slick-greeter.conf to customize your greeter settings.
+
+[Greeter]
+# GTK theme to use (default: Mint-Y-Aqua)
+theme-name=Mint-Y-Aqua
+
+# Icon theme to use (default: Mint-Y)
+icon-theme-name=Mint-Y
+
+# Cursor theme to use
+# cursor-theme-name=Bibata-Modern-Classic
+
+# Background wallpaper image path
+# Replace with your preferred wallpaper path, e.g., /usr/share/backgrounds/linuxmint/default_background.jpg
+background=/usr/share/backgrounds/linuxmint/REPLACE_ME.png
+
+# Whether to draw user-specific backgrounds
+draw-user-backgrounds=false
+
+# Horizontal alignment of the login box: 'left', 'center', or 'right'
+content-align=center
+
+# Show high-contrast and accessibility options
+show-a11y=true
+
+# Show hostname in top bar
+show-hostname=false
+
+# Show clock/time in top bar
+show-clock=true
+# clock-format=%a, %b %d %H:%M
+
+# Show keyboard layout indicator
+show-keyboard=true
+
+# Show battery indicator for laptops
+show-battery=true

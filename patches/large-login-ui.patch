@@ -1,0 +1,250 @@
+--- a/src/dash-button.vala
++++ b/src/dash-button.vala
+@@ -29,7 +29,7 @@
+         set
+         {
+             _text = value;
+-            text_label.set_markup ("<span font=\"Ubuntu 13\">%s</span>".printf (value));
++            text_label.set_markup ("<span font=\"Ubuntu 17\">%s</span>".printf (value));
+         }
+     }
+ 
+@@ -51,7 +51,7 @@
+         var path = Path.build_filename (Config.PKGDATADIR, "arrow_right.svg", null);
+         try
+         {
+-            var pixbuf = new Gdk.Pixbuf.from_file (path);
++            var pixbuf = new Gdk.Pixbuf.from_file_at_scale (path, 24, 24, true);
+             var image = new CachedImage (pixbuf);
+             image.valign = Gtk.Align.CENTER;
+             hbox.add (image);
+@@ -67,7 +67,7 @@
+         try
+         {
+             var style = new Gtk.CssProvider ();
+-            style.load_from_data ("* {padding: 6px 8px 6px 8px;}", -1);
++            style.load_from_data ("* {padding: 10px 14px 10px 14px;}", -1);
+             this.get_style_context ().add_provider (style, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+         }
+         catch (Error e)
+--- a/src/dash-entry.vala
++++ b/src/dash-entry.vala
+@@ -23,7 +23,7 @@
+ 
+ public class DashEntry : Gtk.Entry, Fadable
+ {
+-    public static string font = "Ubuntu 14";
++    public static string font = "Ubuntu 20";
+     public signal void respond ();
+ 
+     public string constant_placeholder_text { get; set; }
+@@ -72,6 +72,7 @@
+         }
+ 
+         override_font (Pango.FontDescription.from_string (font));
++        set_size_request (-1, 72);
+ 
+         var style_ctx = get_style_context ();
+ 
+@@ -153,7 +154,7 @@
+         Gdk.Rectangle rect;
+ 
+         var layout = create_pango_layout (constant_placeholder_text);
+-        layout.set_font_description (Pango.FontDescription.from_string ("Ubuntu 13"));
++        layout.set_font_description (Pango.FontDescription.from_string ("Ubuntu 18"));
+         layout.get_pixel_size (out layout_width, out layout_height);
+ 
+         get_text_area (out rect);
+--- a/src/greeter-list.vala
++++ b/src/greeter-list.vala
+@@ -105,7 +105,7 @@
+     protected Mode mode = Mode.ENTRY;
+ 
+     public const int BORDER = 4;
+-    public const int BOX_WIDTH = 9; /* in grid_size blocks */
++    public const int BOX_WIDTH = 10; /* in grid_size blocks */
+     public const int DEFAULT_BOX_HEIGHT = 3; /* in grid_size blocks */
+ 
+     private uint n_above = 4;
+--- a/src/prompt-box.vala
++++ b/src/prompt-box.vala
+@@ -104,10 +104,10 @@
+         add (fixed);
+ 
+         box_grid = new Gtk.Grid ();
+-        box_grid.column_spacing = 4;
+-        box_grid.row_spacing = 3;
++        box_grid.column_spacing = 8;
++        box_grid.row_spacing = 8;
+         box_grid.margin_top = GreeterList.BORDER;
+-        box_grid.margin_bottom = 4;
++        box_grid.margin_bottom = 8;
+         box_grid.expand = true;
+ 
+         /** Grid layout:
+@@ -203,36 +203,39 @@
+     protected virtual Gtk.Grid create_name_grid ()
+     {
+         var name_grid = new Gtk.Grid ();
+-        name_grid.column_spacing = 4;
++        name_grid.column_spacing = 8;
+         name_grid.hexpand = true;
+ 
+         avatar_image = new UserAvatar();
+-        avatar_image.valign = Gtk.Align.START;
+-        avatar_image.halign = Gtk.Align.START;
+-        avatar_image.margin_top = (ActiveIndicator.WIDTH + box_grid.column_spacing) - ActiveIndicator.MARGIN;
++        avatar_image.valign = Gtk.Align.CENTER;
++        avatar_image.halign = Gtk.Align.CENTER;
++        avatar_image.margin_top = 0;
++        avatar_image.margin_left = 4;
++        avatar_image.margin_right = 6;
+         avatar_image.show();
+         name_grid.attach (avatar_image, COL_AVATAR, ROW_NAME, 1, 1);
+ 
+         name_label = new FadingLabel ("");
+-        name_label.override_font (Pango.FontDescription.from_string ("Ubuntu 13"));
++        name_label.override_font (Pango.FontDescription.from_string ("Ubuntu 18"));
+         name_label.override_color (Gtk.StateFlags.NORMAL, { 1.0f, 1.0f, 1.0f, 1.0f });
+         name_label.halign = Gtk.Align.START;
+-        name_label.valign = Gtk.Align.START;
++        name_label.valign = Gtk.Align.CENTER;
+         name_label.vexpand = false;
+-        name_label.margin_left = 2;
+-        name_label.margin_top = 4;
+-        name_label.set_size_request (-1, grid_size);
++        name_label.margin_left = 8;
++        name_label.margin_top = 0;
++        name_label.set_size_request (-1, 64);
+         name_label.show ();
+         name_grid.attach (name_label, COL_NAME_LABEL, ROW_NAME, 1, 1);
+ 
+         message_image = new CachedImage (null);
+         message_image.set_from_icon_name("mail-unread", Gtk.IconSize.BUTTON);
++        message_image.set_pixel_size (20);
+         message_image.valign = Gtk.Align.CENTER;
+         message_image.halign = Gtk.Align.CENTER;
+ 
+         var align = new Gtk.Alignment (0.5f, 0.5f, 0.0f, 0.0f);
+         align.valign = Gtk.Align.START;
+-        align.set_size_request (-1, grid_size);
++        align.set_size_request (-1, 64);
+         align.add (message_image);
+         align.show ();
+         name_grid.attach (align, COL_NAME_MESSAGE, ROW_NAME, 1, 1);
+@@ -242,14 +245,15 @@
+         option_button.hexpand = true;
+         option_button.vexpand = true;
+         option_button.halign = Gtk.Align.END;
+-        option_button.valign = Gtk.Align.START;
+-        // Keep as much space on top as on the right
+-        option_button.margin_top = (ActiveIndicator.WIDTH + box_grid.column_spacing) - ActiveIndicator.MARGIN;
++        option_button.valign = Gtk.Align.CENTER;
++        option_button.margin_top = 0;
++        option_button.set_size_request (44, 60);
+         Gtk.button_set_focus_on_click (option_button, false);
+         option_button.relief = Gtk.ReliefStyle.NONE;
+         option_button.get_accessible ().set_name (_("Session Options"));
+         option_button.clicked.connect (option_button_clicked_cb);
+         option_image = new CachedImage (null);
++        option_image.set_size_request (28, 28);
+         option_image.show ();
+ 
+         option_button.add (option_image);
+@@ -263,7 +267,7 @@
+     protected virtual Gtk.Grid create_small_name_grid ()
+     {
+         var small_name_grid = new Gtk.Grid ();
+-        small_name_grid.column_spacing = 4;
++        small_name_grid.column_spacing = 6;
+ 
+         small_avatar_image = new UserAvatar();
+         small_avatar_image.is_small = true;
+@@ -272,18 +276,19 @@
+         small_name_grid.attach (small_avatar_image, 0, 0, 1, 1);
+ 
+         small_name_label = new FadingLabel ("");
+-        small_name_label.override_font (Pango.FontDescription.from_string ("Ubuntu 13"));
++        small_name_label.override_font (Pango.FontDescription.from_string ("Ubuntu 14"));
+         small_name_label.override_color (Gtk.StateFlags.NORMAL, { 1.0f, 1.0f, 1.0f, 1.0f });
+         small_name_label.valign = Gtk.Align.CENTER;
+         small_name_label.yalign = 0.5f;
+         small_name_label.xalign = 0.0f;
+-        small_name_label.margin_left = 2;
++        small_name_label.margin_left = 6;
+         small_name_label.set_size_request (-1, grid_size);
+         small_name_label.show ();
+         small_name_grid.attach (small_name_label, 1, 0, 1, 1);
+ 
+         small_message_image = new CachedImage (null);
+         small_message_image.set_from_icon_name("mail-unread", Gtk.IconSize.BUTTON);
++        small_message_image.set_pixel_size (18);
+ 
+         var align = new Gtk.Alignment (0.5f, 0.5f, 0.0f, 0.0f);
+         align.set_size_request (-1, grid_size);
+@@ -338,7 +343,15 @@
+         if (option_button == null)
+             return;
+ 
+-        option_image.set_pixbuf (image);
++        if (image != null)
++        {
++            var scaled_image = image.scale_simple (28, 28, Gdk.InterpType.BILINEAR);
++            option_image.set_pixbuf (scaled_image);
++        }
++        else
++        {
++            option_image.set_pixbuf (null);
++        }
+ 
+         if (tooltip == null)
+             option_image.set_tooltip_text("");
+--- a/src/user-avatar.vala
++++ b/src/user-avatar.vala
+@@ -1,7 +1,8 @@
+ public class UserAvatar : CachedImage
+ {
+-    public const int AVATAR_SIZE = 32;
+-    public const int AVATAR_MARGIN = 6;
++    public const int AVATAR_SIZE = 56;
++    public const int SMALL_AVATAR_SIZE = 32;
++    public const int AVATAR_MARGIN = 10;
+ 
+     private string? _avatar_path;
+     public string? avatar_path 
+@@ -18,6 +19,7 @@
+         get { return _is_small; }
+         set {
+             _is_small = value;
++            setup_avatar();
+             update_avatar();
+         }
+     }
+@@ -28,11 +30,15 @@
+         setup_avatar();
+     }
+ 
++    private int get_avatar_size()
++    {
++        return is_small ? SMALL_AVATAR_SIZE : AVATAR_SIZE;
++    }
++
+     private void setup_avatar()
+     {
+-        // Keep a fixed size of 32px for display
+-        set_size_request(AVATAR_SIZE, AVATAR_SIZE);
+-        margin_right = AVATAR_MARGIN;
++        set_size_request(get_avatar_size(), get_avatar_size());
++        margin_right = is_small ? 6 : AVATAR_MARGIN;
+         halign = Gtk.Align.CENTER;
+         hexpand = false;
+         vexpand = false;
+@@ -46,7 +52,7 @@
+             {
+                 // Double the pixel size for HiDPI
+                 var scale_factor = get_scale_factor();
+-                var pixel_size = AVATAR_SIZE * (scale_factor > 1 ? 2 : 1);
++                var pixel_size = get_avatar_size() * (scale_factor > 1 ? 2 : 1);
+                 
+                 var pixbuf = new Gdk.Pixbuf.from_file_at_scale(
+                     avatar_path,

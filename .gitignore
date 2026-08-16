@@ -1,0 +1,47 @@
+# Debian packaging & build artifacts
+*.deb
+*.ddeb
+*.udeb
+*.buildinfo
+*.changes
+*.dsc
+*.tar.gz
+*.tar.xz
+*.tar.bz2
+*.tar.zst
+*.upload
+
+# Build output directories
+build/
+obj-*/
+bin/
+*.o
+*.a
+*.so
+
+# Debian debhelper files
+.debhelper/
+debian/.debhelper/
+debian/slick-greeter/
+debian/slick-greeter-dbgsym/
+debian/files
+debian/*.substvars
+debian/*.debhelper.log
+debian/debhelper-build-stamp
+
+# Patch reject & backup files
+*.orig
+*.rej
+*.bak
+*.stock
+
+# Editor & OS temporary files
+*~
+*.swp
+*.swo
+.DS_Store
+.vscode/
+.idea/
+
+# Local logs
+*.log
