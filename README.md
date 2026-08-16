@@ -52,7 +52,7 @@ The mod scales the greeter elements proportionally so that a spacious password f
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/slick-greeter-large-ui.git
+git clone https://github.com/Natex15/slick-greeter-large-ui.git
 cd slick-greeter-large-ui
 ```
 

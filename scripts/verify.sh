@@ -5,22 +5,16 @@
 
 set -euo pipefail
 
-# ANSI colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-BOLD='\033[1m'
-NC='\033[0m'
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# shellcheck source=scripts/common.sh
+source "${SCRIPT_DIR}/common.sh"
 
 PASS_COUNT=0
 WARN_COUNT=0
 FAIL_COUNT=0
 
-info() {
-    echo -e "${BLUE}[INFO]${NC} $*"
-}
-
+# Override pass/warn with counting versions for verification
 pass() {
     echo -e "${GREEN}[PASS]${NC} $*"
     PASS_COUNT=$((PASS_COUNT + 1))
@@ -105,7 +99,7 @@ if dpkg -l slick-greeter >/dev/null 2>&1; then
     INSTALLED_VER=$(dpkg-query -W -f='${Version}' slick-greeter 2>/dev/null || true)
     info "Installed slick-greeter version: $INSTALLED_VER"
 
-    if [[ "$INSTALLED_VER" =~ \+(custom|local|mod|build|nate) ]]; then
+    if [[ "$INSTALLED_VER" =~ \+(custom|local|mod|build)[0-9]*$ ]]; then
         pass "Custom Large UI package is currently installed ($INSTALLED_VER)."
     elif [[ "$INSTALLED_VER" == "2.2.6+zena"* ]]; then
         info "Stock Slick-Greeter 2.2.6+zena package is installed."

@@ -10,43 +10,22 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 PATCH_FILE="${REPO_ROOT}/patches/large-login-ui.patch"
 CONFIG_EXAMPLE="${REPO_ROOT}/config/slick-greeter.conf.example"
 
+# shellcheck source=scripts/common.sh
+source "${SCRIPT_DIR}/common.sh"
+
 # Supported versions
 SUPPORTED_VERSION="2.2.6+zena"
 SUPPORTED_DISTRO="Linuxmint"
 SUPPORTED_CODENAME="zena"
 
 # Defaults
-BUILD_DIR="${TMPDIR:-/tmp}/slick-greeter-build-${UID}"
-CUSTOM_REV_SUFFIX="+custom1"
+BUILD_DIR="${REPO_ROOT}/build"
+CUSTOM_REV_PREFIX="+custom"
 WALLPAPER_PATH=""
 WRITE_CONFIG=false
 DRY_RUN=false
 ASSUME_YES=false
 SKIP_BUILD_DEP=false
-
-# ANSI colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-BOLD='\033[1m'
-NC='\033[0m'
-
-info() {
-    echo -e "${BLUE}[INFO]${NC} $*"
-}
-
-pass() {
-    echo -e "${GREEN}[OK]${NC} $*"
-}
-
-warn() {
-    echo -e "${YELLOW}[WARN]${NC} $*"
-}
-
-error() {
-    echo -e "${RED}[ERROR]${NC} $*" >&2
-}
 
 usage() {
     cat <<EOF
@@ -58,7 +37,7 @@ ${BOLD}Options:${NC}
   --wallpaper <path>       Set or update the greeter background wallpaper in /etc/lightdm/slick-greeter.conf
   --write-config           Write /etc/lightdm/slick-greeter.conf from example template if not present
   --package-rev <suffix>   Custom Debian version suffix (default: +custom1)
-  --build-dir <path>       Temporary build directory (default: /tmp/slick-greeter-build-<uid>)
+  --build-dir <path>       Temporary build directory (default: <repo>/build/)
   --skip-build-dep         Skip running apt-get build-dep
   -y, --yes                Run non-interactively, accepting prompts
   -n, --dry-run            Show what steps would be executed without making system changes
@@ -72,6 +51,7 @@ EOF
 }
 
 # Parse CLI arguments
+CUSTOM_REV_SUFFIX=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --wallpaper)
@@ -165,8 +145,9 @@ if [[ "$BASE_VER" == "(none)" || -z "$BASE_VER" ]]; then
     fi
 fi
 
-# Clean base version (strip previous local custom revisions like +custom1, +local1)
-CLEAN_BASE_VER=$(echo "$BASE_VER" | sed -E 's/\+([a-zA-Z0-9_-]+)$//g')
+# Clean base version: strip only known custom suffixes (e.g., +custom1, +local2, +mod3)
+# Preserve upstream suffixes like +zena which are part of the official version string.
+CLEAN_BASE_VER=$(echo "$BASE_VER" | sed -E 's/\+(custom|local|mod|build)[0-9]*$//')
 
 if [[ "$CLEAN_BASE_VER" != "$SUPPORTED_VERSION" ]]; then
     echo ""
@@ -267,28 +248,32 @@ if [[ "$DRY_RUN" == true ]]; then
     info "[Dry-Run] Would test and apply $PATCH_FILE to $SOURCE_DIR"
 else
     info "Checking patch application status..."
-    cd "$SOURCE_DIR"
 
-    # Test if patch applies cleanly
-    if patch -p1 --dry-run -s -f < "$PATCH_FILE" >/dev/null 2>&1; then
+    # Test if patch applies cleanly (run in subshell to avoid changing working directory)
+    if (cd "$SOURCE_DIR" && patch -p1 --dry-run -s -f < "$PATCH_FILE" >/dev/null 2>&1); then
         info "Applying Large UI patch..."
-        patch -p1 < "$PATCH_FILE"
+        (cd "$SOURCE_DIR" && patch -p1 < "$PATCH_FILE")
         pass "Patch applied cleanly with zero errors."
-    elif patch -R -p1 --dry-run -s -f < "$PATCH_FILE" >/dev/null 2>&1; then
+    elif (cd "$SOURCE_DIR" && patch -R -p1 --dry-run -s -f < "$PATCH_FILE" >/dev/null 2>&1); then
         info "Patch is already applied to source tree. Skipping re-application."
     else
         error "Patch failed to apply cleanly to source in $SOURCE_DIR!"
         echo "Running patch with verbose output for diagnostics:"
-        patch -p1 --dry-run < "$PATCH_FILE" || true
+        (cd "$SOURCE_DIR" && patch -p1 --dry-run < "$PATCH_FILE") || true
         exit 1
     fi
 fi
 
-# Determine target version string
-TARGET_VERSION="${CLEAN_BASE_VER}${CUSTOM_REV_SUFFIX}"
-if [[ "$CURRENT_INSTALLED_VER" == "$TARGET_VERSION" ]]; then
-    # Auto-increment revision if the exact version is already installed
-    TARGET_VERSION="${CLEAN_BASE_VER}+custom2"
+# Determine target version string with proper auto-increment
+if [[ -n "$CUSTOM_REV_SUFFIX" ]]; then
+    TARGET_VERSION="${CLEAN_BASE_VER}${CUSTOM_REV_SUFFIX}"
+else
+    REV=1
+    TARGET_VERSION="${CLEAN_BASE_VER}${CUSTOM_REV_PREFIX}${REV}"
+    while [[ "$CURRENT_INSTALLED_VER" == "$TARGET_VERSION" ]]; do
+        REV=$((REV + 1))
+        TARGET_VERSION="${CLEAN_BASE_VER}${CUSTOM_REV_PREFIX}${REV}"
+    done
 fi
 
 info "Target package version: $TARGET_VERSION"
@@ -298,21 +283,24 @@ if [[ "$DRY_RUN" == true ]]; then
     info "[Dry-Run] Would update changelog to $TARGET_VERSION and run dpkg-buildpackage -us -uc -b"
 else
     info "Updating debian/changelog..."
-    cd "$SOURCE_DIR"
-    DEBEMAIL="noreply@local" DEBFULLNAME="Custom Build" \
-        dch -b -v "${TARGET_VERSION}" --force-distribution -D "${DISTRO_CODENAME}" "Custom large login UI"
+    (
+        cd "$SOURCE_DIR"
+        DEBEMAIL="noreply@local" DEBFULLNAME="Custom Build" \
+            dch -b -v "${TARGET_VERSION}" --force-distribution -D "${DISTRO_CODENAME}" "Custom large login UI"
 
-    info "Building package with dpkg-buildpackage (binary only)..."
-    dpkg-buildpackage -us -uc -b
+        info "Building package with dpkg-buildpackage (binary only)..."
+        dpkg-buildpackage -us -uc -b
+    )
 
     pass "Package built successfully!"
 fi
 
-# Step 8: Deterministically locate the generated .deb
-DEB_FILE="${BUILD_DIR}/slick-greeter_${TARGET_VERSION}_amd64.deb"
+# Step 8: Locate the generated .deb using the correct architecture
+ARCH=$(dpkg --print-architecture 2>/dev/null || echo "amd64")
+DEB_FILE="${BUILD_DIR}/slick-greeter_${TARGET_VERSION}_${ARCH}.deb"
 if [[ ! -f "$DEB_FILE" && "$DRY_RUN" != true ]]; then
-    # Search in parent directory of SOURCE_DIR
-    FOUND_DEBS=($(find "$BUILD_DIR" -maxdepth 1 -name "slick-greeter_${TARGET_VERSION}_*.deb"))
+    # Search in build directory for any matching architecture
+    mapfile -t FOUND_DEBS < <(find "$BUILD_DIR" -maxdepth 1 -name "slick-greeter_${TARGET_VERSION}_*.deb")
     if [[ ${#FOUND_DEBS[@]} -gt 0 ]]; then
         DEB_FILE="${FOUND_DEBS[0]}"
     else

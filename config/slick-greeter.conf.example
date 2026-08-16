@@ -13,7 +13,7 @@ icon-theme-name=Mint-Y
 
 # Background wallpaper image path
 # Replace with your preferred wallpaper path, e.g., /usr/share/backgrounds/linuxmint/default_background.jpg
-background=/usr/share/backgrounds/linuxmint/REPLACE_ME.png
+# background=/usr/share/backgrounds/linuxmint/default_background.jpg
 
 # Whether to draw user-specific backgrounds
 draw-user-backgrounds=false
